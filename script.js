@@ -241,6 +241,10 @@ function applyUnitTheme() {
 
     if (logoRps) logoRps.src = unit.logo;
     if (logoLr) logoLr.src = unit.logo;
+
+    /* 유닛 선택 여부에 따라 다르게 줄 스타일(로고 위치, 전체 전용 확대 등)을
+       CSS에서 구분할 수 있도록 body에 상태 클래스를 붙여둔다. */
+    document.body.classList.toggle("unit-selected", !!currentUnit);
 }
 
 const table = document.getElementById("chartTable");
@@ -454,6 +458,20 @@ tabLr.addEventListener("click", () => switchTab("lr"));
    덴페스 취향표 - 표 생성
 ========================================== */
 
+/* 덴페스 표(칸 118px, 첫 열 140px)가 화면 폭(1100px)보다 넓어지면
+   화면에서는 좌우로 드래그해서 볼 수 있지만, 저장 이미지는 보이는 부분만
+   찍혀 표가 잘렸다. 실제 표 폭에 맞춰 캡처 폭을 늘려서 표 전체가 저장되게 한다.
+   인원이 적어 표가 원래 1100px보다 좁을 때는 기존 기본 폭(1100px)을 그대로 쓴다. */
+const RPS_FIRST_COL_WIDTH = 140;
+const RPS_COL_WIDTH = 118;
+const RPS_PADDING_X = 100; // .capture-area 좌우 padding 합(50px * 2)
+
+function getRpsCaptureWidth() {
+    const columns = getVisibleColIndexes().length;
+    const tableWidth = RPS_FIRST_COL_WIDTH + columns * RPS_COL_WIDTH;
+    return Math.max(DESKTOP_CAPTURE_WIDTH, RPS_PADDING_X + tableWidth);
+}
+
 function createTable() {
     table.innerHTML = "";
 
@@ -666,6 +684,7 @@ function renderModalExtra(titleText) {
         }
         saveHiddenState();
         createTable();
+        fitCaptureArea();
         modal.classList.add("hidden");
     });
 
@@ -974,6 +993,7 @@ resetBtn.addEventListener("click", () => {
         redoStack = [];
         updateNavButtons();
         createTable();
+        fitCaptureArea();
     } else {
         localStorage.removeItem(LR_STORAGE_KEY);
         lrData = { texts: {}, cells: {}, photos: {} };
@@ -1001,7 +1021,7 @@ saveBtn.addEventListener("click", async () => {
     /* 화면(특히 모바일)에 적용돼 있던 축소/반응형 스타일을 잠시 걷어내고,
        항상 PC 버전과 동일한 레이아웃(덴페스는 1100px, 공수는 컬럼 수에 맞춘 폭)으로
        저장되도록 한다. */
-    const captureWidth = currentTab === "rps" ? DESKTOP_CAPTURE_WIDTH : getLrCaptureWidth();
+    const captureWidth = currentTab === "rps" ? getRpsCaptureWidth() : getLrCaptureWidth();
     const prevTransform = area.style.transform;
     const prevWidth = area.style.width;
     area.style.transform = "none";
@@ -1104,8 +1124,8 @@ function fitCaptureArea() {
 
     if (!area || !wrap) return;
 
-    /* 덴페스 취향표는 항상 1100px, 공수 취향표는 컬럼 수에 맞춰 계산된 폭 */
-    const desktopWidth = currentTab === "rps" ? DESKTOP_CAPTURE_WIDTH : getLrCaptureWidth();
+    /* 덴페스 취향표는 표 폭(인원수)에 맞춰, 공수 취향표는 컬럼 수에 맞춰 계산된 폭 */
+    const desktopWidth = currentTab === "rps" ? getRpsCaptureWidth() : getLrCaptureWidth();
 
     const screenWidth = Math.min(
         window.innerWidth,

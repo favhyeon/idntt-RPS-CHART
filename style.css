@@ -121,6 +121,13 @@ h1 {
     margin: 0 0 38px;
 }
 
+/* 유닛 로고(unevermet/yesw8are/itsnot5ver)는 idntt 로고보다 낮고 넓적해서
+   같은 위 여백을 쓰면 위쪽에 붕 떠 보인다. 유닛이 선택된 덴페스 취향표에서만
+   로고를 살짝 아래로 내려준다. */
+.unit-selected #logoRps {
+    margin-top: 18px;
+}
+
 /* 공수 취향표(전체/유닛 공통)는 로고와 제목 사이는 좁히고,
    제목과 프로필 사이는 넓혀서 제목이 로고 쪽에 붙어 보이게 한다. */
 #logoLr {
@@ -129,6 +136,18 @@ h1 {
 
 #captureAreaLr h1 {
     margin: 0 0 54px;
+}
+
+/* 전체(유닛 미선택) 공수 취향표는 캡처 폭이 훨씬 넓어졌으니,
+   프로필 사진(128px)/칸 크기에 맞춰 로고와 제목도 같은 비율로 키운다. */
+body:not(.unit-selected) #logoLr {
+    width: 380px;
+    margin: 0 auto 20px;
+}
+
+body:not(.unit-selected) #captureAreaLr h1 {
+    font-size: 44px;
+    margin: 0 0 68px;
 }
 
 .capture-id-bottom {
