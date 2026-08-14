@@ -458,18 +458,24 @@ tabLr.addEventListener("click", () => switchTab("lr"));
    덴페스 취향표 - 표 생성
 ========================================== */
 
-/* 덴페스 표(칸 118px, 첫 열 140px)가 화면 폭(1100px)보다 넓어지면
-   화면에서는 좌우로 드래그해서 볼 수 있지만, 저장 이미지는 보이는 부분만
-   찍혀 표가 잘렸다. 실제 표 폭에 맞춰 캡처 폭을 늘려서 표 전체가 저장되게 한다.
-   인원이 적어 표가 원래 1100px보다 좁을 때는 기존 기본 폭(1100px)을 그대로 쓴다. */
+/* 덴페스 표(칸 118px, 첫 열 140px)가 캡처 폭보다 넓어지면 화면에서는
+   좌우로 드래그해서 볼 수 있지만, 저장 이미지는 보이는 부분만 찍혀
+   표가 잘렸다. 실제 표 폭 + 좌우 여백에 맞춰 캡처 폭을 계산해서
+   표 전체가 저장되게 한다. 인원이 적은 유닛(예: 5명)은 표 자체가
+   좁으니 캡처 폭도 같이 좁아져서 가로 여백이 과하게 남지 않는다. */
 const RPS_FIRST_COL_WIDTH = 140;
 const RPS_COL_WIDTH = 118;
-const RPS_PADDING_X = 100; // .capture-area 좌우 padding 합(50px * 2)
+const RPS_PADDING_X_DEFAULT = 100; // .capture-area 기본 좌우 padding 합(50px * 2)
+const RPS_PADDING_X_ALL = 160;     // 전체(유닛 미선택)는 좌우 padding을 80px씩 더 넉넉하게
+
+function getRpsPaddingX() {
+    return currentUnit ? RPS_PADDING_X_DEFAULT : RPS_PADDING_X_ALL;
+}
 
 function getRpsCaptureWidth() {
     const columns = getVisibleColIndexes().length;
     const tableWidth = RPS_FIRST_COL_WIDTH + columns * RPS_COL_WIDTH;
-    return Math.max(DESKTOP_CAPTURE_WIDTH, RPS_PADDING_X + tableWidth);
+    return getRpsPaddingX() + tableWidth;
 }
 
 function createTable() {

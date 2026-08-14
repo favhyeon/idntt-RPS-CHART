@@ -56,15 +56,27 @@ body {
     transform-origin: top left;
 }
 
-/* 덴페스 취향표는 항상 고정 폭. 공수 취향표는 컬럼 수(인원수)에 맞춰
-   JS(getLrCaptureWidth)가 실제 폭을 계산해서 인라인 스타일로 넣어준다.
-   여기 값은 JS 실행 전 잠깐 보이는 기본값일 뿐이다. */
+/* 덴페스/공수 취향표 모두 인원수(표 폭 / 컬럼 수)에 맞춰
+   JS(getRpsCaptureWidth / getLrCaptureWidth)가 실제 폭을 계산해서
+   인라인 스타일로 넣어준다. 여기 값은 JS 실행 전 잠깐 보이는 기본값일 뿐이다. */
 #captureArea {
     width: 1100px;
 }
 
 #captureAreaLr {
     width: 1100px;
+}
+
+/* 전체(유닛 미선택) 덴페스 취향표는 인원이 많아 캡처 폭이 넓어진 만큼
+   위쪽/좌우 여백도 같이 넉넉하게 늘린다. 이 좌우 padding 값(80px * 2)은
+   JS의 RPS_PADDING_X_ALL과 반드시 같아야 표가 잘리지 않는다. */
+body:not(.unit-selected) #captureArea {
+    padding: 56px 80px 34px;
+}
+
+/* 전체(유닛 미선택) 공수 취향표는 로고/제목이 커진 만큼 위쪽 여백도 늘린다. */
+body:not(.unit-selected) #captureAreaLr {
+    padding-top: 56px;
 }
 
 /* ===========================
@@ -121,11 +133,13 @@ h1 {
     margin: 0 0 38px;
 }
 
-/* 유닛 로고(unevermet/yesw8are/itsnot5ver)는 idntt 로고보다 낮고 넓적해서
-   같은 위 여백을 쓰면 위쪽에 붕 떠 보인다. 유닛이 선택된 덴페스 취향표에서만
-   로고를 살짝 아래로 내려준다. */
+/* 유닛 로고(unevermet/yesw8are/itsnot5ver) 이미지 자체에 여백이 있어서
+   기본값(위 0 / 아래 38px)을 그대로 쓰면 위쪽엔 붕 뜨고 제목과는 멀어 보인다.
+   유닛이 선택된 덴페스 취향표에서만 로고를 조금 더 내리고, 로고-제목 거리가
+   제목-표 거리(h1 margin-bottom 38px)와 비슷해지도록 아래 여백을 줄인다. */
 .unit-selected #logoRps {
-    margin-top: 18px;
+    margin-top: 30px;
+    margin-bottom: 6px;
 }
 
 /* 공수 취향표(전체/유닛 공통)는 로고와 제목 사이는 좁히고,
