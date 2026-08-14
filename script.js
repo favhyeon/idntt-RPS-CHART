@@ -82,10 +82,31 @@ let currentUnit = null;
 const UNIT_KEY = "idntt-selected-unit";
 
 /*
- * 행 멤버 × 열 멤버 커플명을 이니셜 조합으로 즉석에서 만든다.
- * (원본처럼 400칸을 전부 하드코딩하는 대신, 이니셜 두 개를 이어붙이는 규칙을 그대로 적용)
+ * CP명(커플명) 개별 수정 목록.
+ * 기본값은 "행 멤버 이니셜 + 열 멤버 이니셜" 자동 조합이고,
+ * 특정 조합만 다르게 표시하고 싶으면 아래에 한 줄씩 추가하면 된다.
+ * 형식: "행 멤버 이름-열 멤버 이름": "표시할 CP명"
+ * (행=세로/열=가로 기준이라 "김도훈-김희주"와 "김희주-김도훈"은 서로 다른 칸이다)
+ *
+ * 예)
+ * "김도훈-김희주": "도희",
+ * "김희주-김도훈": "희도",
+ */
+const PAIR_NAME_OVERRIDES = {
+    // 여기에 한 줄씩 추가해서 원하는 CP명으로 바꿔주세요.
+};
+
+/*
+ * 행 멤버 × 열 멤버 커플명을 만든다.
+ * PAIR_NAME_OVERRIDES에 등록돼 있으면 그 값을 쓰고, 없으면 이니셜 조합을 그대로 쓴다.
  */
 function getPairName(rowIndex, colIndex) {
+    const key = `${members[rowIndex]}-${members[colIndex]}`;
+
+    if (Object.prototype.hasOwnProperty.call(PAIR_NAME_OVERRIDES, key)) {
+        return PAIR_NAME_OVERRIDES[key];
+    }
+
     return ownInitials[rowIndex] + ownInitials[colIndex];
 }
 
@@ -373,6 +394,7 @@ function setUnit(unitKey) {
     applyUnitTheme();
     createTable();
     createLrGrid();
+    fitCaptureArea();
 }
 
 unitToggles.forEach(({ el, key }) => {
@@ -725,6 +747,23 @@ function defaultAvatar(name, color) {
    공수 취향표 - 그리드 생성
 ========================================== */
 
+/* 공수 취향표 캡처 폭 계산용 상수.
+   .lr-avatar 폭(128) + .lr-row gap(22) + 바/텍스트 칸이 자연스럽게 보이는
+   목표 폭(360)을 한 컬럼 폭으로 잡고, 컬럼 수(전체는 4, 유닛은 2)에 맞춰
+   전체 캡처 폭을 늘린다. 인원이 많아 컬럼이 늘어날수록 폭도 같이 늘어나서
+   칸이 찌그러지지 않는다. */
+const LR_AVATAR_WIDTH = 128;
+const LR_ROW_GAP = 22;       // .lr-row gap
+const LR_COLUMN_GAP = 50;    // .lr-grid gap
+const LR_CONTENT_TARGET_WIDTH = 360;
+const LR_PADDING_X = 100;    // .capture-area 좌우 padding 합(50px * 2)
+
+function getLrCaptureWidth() {
+    const columns = getLrColumns().length || 1;
+    const columnWidth = LR_AVATAR_WIDTH + LR_ROW_GAP + LR_CONTENT_TARGET_WIDTH;
+    return LR_PADDING_X + columns * columnWidth + (columns - 1) * LR_COLUMN_GAP;
+}
+
 /* 현재 보이는 멤버 목록을, 유닛별로 정해둔 세로 그룹 인원수(columnSizes)에
    맞춰 순서대로 잘라 컬럼 배열로 만든다. (전체 5-5-5-5 / 유닛1 4-3 /
    유닛2 4-4 / 유닛3 3-2) */
@@ -960,9 +999,13 @@ saveBtn.addEventListener("click", async () => {
     area.classList.add("capturing");
 
     /* 화면(특히 모바일)에 적용돼 있던 축소/반응형 스타일을 잠시 걷어내고,
-       항상 PC 버전과 동일한 1100px 레이아웃으로 저장되도록 한다. */
+       항상 PC 버전과 동일한 레이아웃(덴페스는 1100px, 공수는 컬럼 수에 맞춘 폭)으로
+       저장되도록 한다. */
+    const captureWidth = currentTab === "rps" ? DESKTOP_CAPTURE_WIDTH : getLrCaptureWidth();
     const prevTransform = area.style.transform;
+    const prevWidth = area.style.width;
     area.style.transform = "none";
+    area.style.width = `${captureWidth}px`;
 
     try {
         const canvas = await html2canvas(area, {
@@ -970,7 +1013,7 @@ saveBtn.addEventListener("click", async () => {
             scale: 4,
             useCORS: true,
             logging: false,
-            windowWidth: DESKTOP_CAPTURE_WIDTH,
+            windowWidth: captureWidth,
             windowHeight: Math.max(area.scrollHeight, 1600),
             /*
              * html2canvas는 textarea 안의 줄바꿈/자동 줄바꿈을 제대로
@@ -1028,6 +1071,7 @@ saveBtn.addEventListener("click", async () => {
     } finally {
         area.classList.remove("capturing");
         area.style.transform = prevTransform;
+        area.style.width = prevWidth;
         buttonWrap.style.display = "flex";
         tabWrap.style.display = "flex";
         dateToggleWrap.style.display = "flex";
@@ -1060,6 +1104,9 @@ function fitCaptureArea() {
 
     if (!area || !wrap) return;
 
+    /* 덴페스 취향표는 항상 1100px, 공수 취향표는 컬럼 수에 맞춰 계산된 폭 */
+    const desktopWidth = currentTab === "rps" ? DESKTOP_CAPTURE_WIDTH : getLrCaptureWidth();
+
     const screenWidth = Math.min(
         window.innerWidth,
         document.documentElement.clientWidth
@@ -1070,17 +1117,20 @@ function fitCaptureArea() {
            세로로 길어진 내용은 화면을 드래그해서 내려보는 방식으로 확인한다. */
         area.style.transform = "none";
         area.style.transformOrigin = "";
+        area.style.width = "";
         wrap.style.width = "";
         wrap.style.height = "";
         return;
     }
 
-    const scale = Math.min(1, screenWidth / DESKTOP_CAPTURE_WIDTH);
+    area.style.width = `${desktopWidth}px`;
+
+    const scale = Math.min(1, screenWidth / desktopWidth);
 
     area.style.transformOrigin = "top left";
     area.style.transform = `scale(${scale})`;
 
-    wrap.style.width = `${DESKTOP_CAPTURE_WIDTH * scale}px`;
+    wrap.style.width = `${desktopWidth * scale}px`;
     wrap.style.height = `${area.scrollHeight * scale}px`;
 }
 

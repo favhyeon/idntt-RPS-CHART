@@ -48,13 +48,23 @@ body {
 }
 
 .capture-area {
-    width: 1100px;
     margin: 0 auto;
     padding: 28px 50px 34px;
     background: #fff;
     border-radius: 24px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, .08);
     transform-origin: top left;
+}
+
+/* 덴페스 취향표는 항상 고정 폭. 공수 취향표는 컬럼 수(인원수)에 맞춰
+   JS(getLrCaptureWidth)가 실제 폭을 계산해서 인라인 스타일로 넣어준다.
+   여기 값은 JS 실행 전 잠깐 보이는 기본값일 뿐이다. */
+#captureArea {
+    width: 1100px;
+}
+
+#captureAreaLr {
+    width: 1100px;
 }
 
 /* ===========================
@@ -109,6 +119,16 @@ h1 {
     font-weight: 900;
     color: var(--accent-text);
     margin: 0 0 38px;
+}
+
+/* 공수 취향표(전체/유닛 공통)는 로고와 제목 사이는 좁히고,
+   제목과 프로필 사이는 넓혀서 제목이 로고 쪽에 붙어 보이게 한다. */
+#logoLr {
+    margin: 0 auto 16px;
+}
+
+#captureAreaLr h1 {
+    margin: 0 0 54px;
 }
 
 .capture-id-bottom {
@@ -823,10 +843,16 @@ button:hover {
     }
 
     .capture-area {
-        width: 100%;
         padding: 20px 14px 22px;
         border-radius: 16px;
         box-shadow: 0 6px 20px rgba(0, 0, 0, .08);
+    }
+
+    /* 모바일에서는 두 영역 모두 화면 폭에 맞춰 100%로 (JS가 넣어준
+       데스크톱 전용 인라인 폭도 fitCaptureArea에서 비워준다) */
+    #captureArea,
+    #captureAreaLr {
+        width: 100%;
     }
 
     .logo {
@@ -837,6 +863,14 @@ button:hover {
     h1 {
         font-size: 19px;
         margin: 0 0 14px;
+    }
+
+    #logoLr {
+        margin: 0 auto 8px;
+    }
+
+    #captureAreaLr h1 {
+        margin: 0 0 22px;
     }
 
     .chart-date {
