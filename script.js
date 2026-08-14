@@ -1028,8 +1028,6 @@ saveBtn.addEventListener("click", async () => {
        항상 PC 버전과 동일한 레이아웃(덴페스는 1100px, 공수는 컬럼 수에 맞춘 폭)으로
        저장되도록 한다. */
     const captureWidth = currentTab === "rps" ? getRpsCaptureWidth() : getLrCaptureWidth();
-    const prevTransform = area.style.transform;
-    const prevWidth = area.style.width;
     area.style.transform = "none";
     area.style.width = `${captureWidth}px`;
 
@@ -1096,8 +1094,12 @@ saveBtn.addEventListener("click", async () => {
         alert("이미지 저장 중 문제가 발생했습니다.");
     } finally {
         area.classList.remove("capturing");
-        area.style.transform = prevTransform;
-        area.style.width = prevWidth;
+        /* area.style.transform/width만 prevTransform/prevWidth로 되돌리면
+           scaleWrap의 width/height는 예전 값 그대로 남아 area와 어긋나면서
+           옆에 여백이 생기거나 로고가 커 보이는 등 화면이 깨진다.
+           fitCaptureArea()를 다시 호출해서 area와 scaleWrap을 항상 같은
+           기준으로 함께 재계산한다. */
+        fitCaptureArea();
         buttonWrap.style.display = "flex";
         tabWrap.style.display = "flex";
         dateToggleWrap.style.display = "flex";
