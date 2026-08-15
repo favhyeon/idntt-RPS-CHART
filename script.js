@@ -1034,7 +1034,10 @@ saveBtn.addEventListener("click", async () => {
     try {
         const canvas = await html2canvas(area, {
             backgroundColor: "#ffffff",
-            scale: 4,
+            /* scale 4는 표가 큰 경우(전체 20명 등) 캔버스 픽셀 수가 지나치게 커져서
+               모바일(특히 아이폰 사파리)에서 캡처 자체가 실패하거나 멈추는 원인이 될 수 있다.
+               2로 낮춰도 충분히 고화질이고, 실패 확률은 크게 줄어든다. */
+            scale: 2,
             useCORS: true,
             logging: false,
             windowWidth: captureWidth,
@@ -1082,13 +1085,43 @@ saveBtn.addEventListener("click", async () => {
 
         const unitLabel = getCurrentUnitData().label;
         const fileLabel = currentTab === "rps" ? "덴페스_취향표" : "공수_취향표";
+        const fileName = `idntt_${unitLabel}_${fileLabel}.png`;
 
-        const link = document.createElement("a");
-        link.href = currentBlobUrl;
-        link.download = `idntt_${unitLabel}_${fileLabel}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        /*
+         * iOS Safari는 <a download> 속성을 지원하지 않는다(무시하고 그냥 새 탭에
+         * 이미지를 열거나 아무 동작도 하지 않는다). 그래서 아이폰에서는
+         * "저장이 안 된다"는 문제가 흔하게 발생한다.
+         * navigator.share에 파일을 넘길 수 있는 환경(대부분의 모바일 사파리/크롬)에서는
+         * 공유 시트 -> "이미지 저장"으로 실제 사진 앱에 저장할 수 있어 이 방법을 우선 시도한다.
+         */
+        const file = new File([blob], fileName, { type: "image/png" });
+        const canUseShare = navigator.canShare && navigator.canShare({ files: [file] });
+
+        if (canUseShare) {
+            try {
+                await navigator.share({ files: [file], title: fileName });
+            } catch (shareError) {
+                /* 사용자가 공유 시트를 취소한 경우(AbortError)는 실패가 아니므로 조용히 무시.
+                   그 외 에러는 아래 다운로드 링크 방식으로 폴백한다. */
+                if (shareError && shareError.name !== "AbortError") {
+                    const link = document.createElement("a");
+                    link.href = currentBlobUrl;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+        } else {
+            const link = document.createElement("a");
+            link.href = currentBlobUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        /* navigator.share/다운로드 링크가 모두 지원되지 않는 브라우저를 위한 최종 안전망으로,
+           저장 완료 모달의 미리보기 이미지를 길게 눌러 저장할 수 있도록 항상 함께 보여준다. */
     } catch (error) {
         console.error(error);
         alert("이미지 저장 중 문제가 발생했습니다.");
